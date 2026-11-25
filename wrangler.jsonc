@@ -1,0 +1,12 @@
+// Cloudflare Workers config for a fully static Astro site.
+// Astro builds to ./dist and Cloudflare serves those files. No server code runs.
+{
+  // Your free address before the custom domain: https://liamrawsthorne.<your-subdomain>.workers.dev
+  "name": "liamrawsthorne",
+  "compatibility_date": "2026-11-22",
+  "assets": {
+    "directory": "./dist",
+    // Serve dist/404.html for unknown URLs
+    "not_found_handling": "404-page"
+  }
+}

@@ -1,0 +1,175 @@
+---
+// The "Send me a message" form. Messages are delivered by Web3Forms (free):
+// paste your access key into Site details > Contact form key in Pages CMS.
+// Until a key is set, sending opens the visitor's email app instead.
+import { site } from '../lib/site';
+
+const hasKey = Boolean(site.formAccessKey);
+const id = `f${Math.random().toString(36).slice(2, 7)}`;
+const fields = [
+  { name: 'first_name', label: 'First Name', type: 'text' as const, placeholder: 'John', autocomplete: 'given-name', required: true },
+  { name: 'last_name', label: 'Last Name', type: 'text' as const, placeholder: 'Doe', autocomplete: 'family-name', required: false },
+  { name: 'email', label: 'Email Address', type: 'email' as const, placeholder: 'johndoe@email.com', autocomplete: 'email', required: true },
+  { name: 'phone', label: 'Phone Number', type: 'tel' as const, placeholder: '07483 489009', autocomplete: 'tel', required: false },
+];
+---
+
+<form
+  class="contact-form"
+  action={hasKey ? 'https://api.web3forms.com/submit' : `mailto:${site.email}`}
+  method="post"
+  enctype={hasKey ? undefined : 'text/plain'}
+  data-key={hasKey ? 'yes' : 'no'}
+  data-email={site.email}
+>
+  {hasKey && (
+    <>
+      <input type="hidden" name="access_key" value={site.formAccessKey} />
+      <input type="hidden" name="subject" value={`New message from ${site.name}'s website`} />
+      <input type="hidden" name="from_name" value={`${site.name} website`} />
+      <input type="checkbox" name="botcheck" class="visually-hidden" tabindex="-1" autocomplete="off" />
+    </>
+  )}
+
+  {fields.map((f) => (
+    <div class="field">
+      <label for={`${id}-${f.name}`}>{f.label}</label>
+      <input
+        id={`${id}-${f.name}`}
+        name={f.name}
+        type={f.type}
+        placeholder={f.placeholder}
+        autocomplete={f.autocomplete}
+        required={f.required}
+      />
+    </div>
+  ))}
+  <div class="field">
+    <label for={`${id}-message`}>Message</label>
+    <textarea id={`${id}-message`} name="message" rows="4" placeholder="Your message here" required></textarea>
+  </div>
+
+  <div class="actions">
+    <button class="button" type="submit">Send message</button>
+    <p class="status" role="status" aria-live="polite"></p>
+  </div>
+</form>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>('.contact-form').forEach((form) => {
+    const status = form.querySelector<HTMLElement>('.status')!;
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    const email = form.dataset.email ?? '';
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const data = new FormData(form);
+
+      // No form key yet: open the visitor's email app with the message filled in
+      if (form.dataset.key !== 'yes') {
+        const name = `${data.get('first_name') ?? ''} ${data.get('last_name') ?? ''}`.trim();
+        const body = `${data.get('message') ?? ''}\n\n${name}\n${data.get('email') ?? ''}\n${data.get('phone') ?? ''}`.trim();
+        window.location.href = `mailto:${email}?subject=${encodeURIComponent(`Message from ${name || 'your website'}`)}&body=${encodeURIComponent(body)}`;
+        return;
+      }
+
+      button.disabled = true;
+      status.textContent = 'Sending…';
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          body: data,
+        });
+        const result = await response.json().catch(() => ({}));
+        if (response.ok && result.success !== false) {
+          form.reset();
+          status.textContent = 'Thanks, your message has been sent. I’ll get back to you soon.';
+        } else {
+          throw new Error(result.message || 'Send failed');
+        }
+      } catch {
+        status.textContent = `Your message couldn’t be sent. Please email me at ${email} instead.`;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  });
+</script>
+
+<style>
+  .contact-form {
+    display: grid;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 58rem;
+    margin-inline: auto;
+  }
+
+  .field {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  label {
+    font-size: 1rem;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    padding: 0.35rem 0 0.6rem;
+    border: 0;
+    border-bottom: 1px solid currentColor;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: var(--text-m);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 3.5rem;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: currentColor;
+    opacity: 0.4;
+  }
+
+  input:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    border-bottom-width: 2px;
+    margin-bottom: -1px;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 1.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .status {
+    font-size: var(--text-m);
+  }
+
+  @media (min-width: 48rem) {
+    .field {
+      grid-template-columns: 15rem 1fr;
+      align-items: end;
+    }
+
+    .field:has(textarea) {
+      align-items: start;
+    }
+
+    .actions {
+      padding-left: 15rem;
+    }
+  }
+</style>

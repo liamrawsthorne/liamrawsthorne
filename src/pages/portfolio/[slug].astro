@@ -1,0 +1,189 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Sections from '../../components/Sections.astro';
+import { getPortfolio, type PortfolioItem } from '../../lib/portfolio';
+import { imageWidths } from '../../lib/images';
+import { url } from '../../lib/url';
+
+export async function getStaticPaths() {
+  const items = await getPortfolio();
+  return items.map((item, i) => ({
+    params: { slug: item.id },
+    props: { item, next: items[(i + 1) % items.length] as PortfolioItem },
+  }));
+}
+
+const { item, next } = Astro.props;
+const { title, summary, categories, client, year, cover, coverAlt, liveUrl, sections } = item.data;
+const liveLabel = liveUrl ? new URL(liveUrl).hostname.replace(/^www\./, '') : '';
+---
+
+<Base title={title} description={summary} page="work">
+  <PageHero title={title} />
+
+  <section class="light project">
+    <div class="container layout">
+      <div class="main">
+        {categories.length > 0 && <p class="category">{categories.join(', ')}</p>}
+        {summary && <p class="summary">{summary}</p>}
+
+        {cover && (
+          <figure class="cover">
+            <Image src={cover} alt={coverAlt ?? ''} widths={imageWidths} sizes="(min-width: 64rem) 60vw, 100vw" loading="eager" />
+          </figure>
+        )}
+
+        {sections.length > 0 ? (
+          <Sections sections={sections} />
+        ) : (
+          <p class="soon">The full case study for this project is coming soon.</p>
+        )}
+      </div>
+
+      <aside class="details" aria-label="Project details">
+        <dl>
+          {client && (
+            <div>
+              <dt>Client</dt>
+              <dd>{client}</dd>
+            </div>
+          )}
+          {year && (
+            <div>
+              <dt>Year</dt>
+              <dd>{year}</dd>
+            </div>
+          )}
+          {categories.length > 0 && (
+            <div>
+              <dt>Type of work</dt>
+              <dd>{categories.join(', ')}</dd>
+            </div>
+          )}
+          {liveUrl && (
+            <div>
+              <dt>Website</dt>
+              <dd><a href={liveUrl}>{liveLabel}</a></dd>
+            </div>
+          )}
+        </dl>
+        <a class="button" href={url('/contact/')}>Start a project</a>
+      </aside>
+    </div>
+
+    {next && next.id !== item.id && (
+      <div class="container">
+        <nav class="next" aria-label="Next project">
+          <span>Next project</span>
+          <a href={url(`/portfolio/${next.id}/`)}>{next.data.title}</a>
+        </nav>
+      </div>
+    )}
+  </section>
+</Base>
+
+<style>
+  .project {
+    padding-block: clamp(3rem, 6vw, 5rem) var(--section-space);
+  }
+
+  .layout {
+    display: grid;
+    gap: 3rem;
+  }
+
+  .main {
+    display: grid;
+    gap: 2rem;
+    align-content: start;
+    min-width: 0;
+  }
+
+  .category {
+    color: var(--primary);
+    font-size: var(--text-m);
+  }
+
+  .summary {
+    max-width: 30ch;
+    font-size: var(--h1);
+    line-height: 1.25;
+    margin-top: -1rem;
+  }
+
+  .cover :global(img) {
+    width: 100%;
+    border-radius: var(--radius);
+  }
+
+  .soon {
+    color: var(--muted-on-light);
+    font-size: var(--text-m);
+  }
+
+  .details {
+    display: grid;
+    gap: 2rem;
+    align-content: start;
+  }
+
+  dl {
+    display: grid;
+    gap: 1.25rem;
+    font-size: var(--text-m);
+  }
+
+  dt {
+    color: var(--muted-on-light);
+  }
+
+  dd a {
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+
+  .details .button {
+    justify-self: start;
+  }
+
+  @media (min-width: 64rem) {
+    .layout {
+      grid-template-columns: 8fr 3fr;
+      gap: 5rem;
+    }
+
+    .details {
+      position: sticky;
+      top: 2rem;
+      padding-top: 0.25rem;
+    }
+  }
+
+  .next {
+    display: grid;
+    gap: 0.25rem;
+    margin-top: var(--section-space);
+    padding-top: 2rem;
+    border-top: 1px solid var(--line-on-light);
+  }
+
+  .next span {
+    color: var(--muted-on-light);
+    font-size: var(--text-m);
+  }
+
+  .next a {
+    justify-self: start;
+    font-size: calc(var(--h1) * 1.25);
+    line-height: 1.25;
+    text-decoration: none;
+  }
+
+  .next a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.15em;
+  }
+</style>

@@ -1,0 +1,210 @@
+---
+import { site } from '../lib/site';
+import { url } from '../lib/url';
+
+interface Props {
+  page?: 'home' | 'work' | 'resume' | 'contact' | null;
+}
+
+const { page = null } = Astro.props;
+
+const nav = [
+  { key: 'home', label: 'Home', href: url('/') },
+  { key: 'work', label: 'My Work', href: url('/my-work/') },
+  { key: 'resume', label: 'My Resume', href: url('/my-resume/') },
+  { key: 'contact', label: 'Contact Me', href: url('/contact/') },
+];
+---
+
+<header class="site-header">
+  <div class="bar container">
+    <a class="name" href={url('/')}>{site.name}</a>
+
+    <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-menu">
+      <span class="open-label">Menu</span>
+      <span class="close-label">Close</span>
+    </button>
+
+    <div class="menu" id="site-menu">
+      <nav aria-label="Main">
+        <ul>
+          {nav.map((item) => (
+            <li>
+              <a href={item.href} aria-current={page === item.key ? 'page' : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <ul class="contact" aria-label="Contact details">
+        <li><a href={`mailto:${site.email}`}>{site.email}</a></li>
+        {site.phone && <li><a href={site.phoneHref}>{site.phone}</a></li>}
+      </ul>
+    </div>
+  </div>
+</header>
+
+<script>
+  const header = document.querySelector('.site-header');
+  const button = header?.querySelector<HTMLButtonElement>('.menu-button');
+  const setOpen = (open: boolean) => {
+    header?.classList.toggle('is-open', open);
+    button?.setAttribute('aria-expanded', String(open));
+    document.documentElement.classList.toggle('menu-open', open);
+  };
+  button?.addEventListener('click', () => setOpen(!header?.classList.contains('is-open')));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && header?.classList.contains('is-open')) {
+      setOpen(false);
+      button?.focus();
+    }
+  });
+  window.matchMedia('(min-width: 60rem)').addEventListener('change', () => setOpen(false));
+</script>
+
+<style>
+  .site-header {
+    position: absolute;
+    inset: 0 0 auto 0;
+    z-index: 50;
+    color: var(--white);
+    font-size: var(--text-m);
+  }
+
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    padding-block: 1.8rem;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  .name {
+    position: relative;
+    z-index: 2;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+  }
+
+  nav a {
+    color: var(--muted);
+    transition: color 0.2s ease;
+  }
+
+  nav a:hover,
+  nav a[aria-current='page'] {
+    color: var(--white);
+  }
+
+  .contact {
+    gap: 0.25rem 1.85rem;
+  }
+
+  .menu-button {
+    display: none;
+    position: relative;
+    z-index: 2;
+    padding: 0.35rem 0.9rem;
+    border: 1px solid rgb(255 255 255 / 0.4);
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .close-label {
+    display: none;
+  }
+
+  /* Phones and tablets: a Menu button opens a full-screen menu */
+  @media (max-width: 59.99rem) {
+    .menu {
+      width: 100%;
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    :global(.js) .menu-button {
+      display: inline-block;
+    }
+
+    :global(.js) .menu {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      display: none;
+      align-content: center;
+      gap: 3rem;
+      padding: 6rem var(--gutter) 3rem;
+      background: var(--ink);
+    }
+
+    :global(.js) .is-open .menu {
+      display: grid;
+    }
+
+    :global(.js) .is-open .open-label {
+      display: none;
+    }
+
+    :global(.js) .is-open .close-label {
+      display: inline;
+    }
+
+    :global(.js) nav ul {
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    :global(.js) nav a {
+      font-size: var(--h1);
+      line-height: 1.2;
+    }
+
+    :global(.js) .contact {
+      display: grid;
+      gap: 0.5rem;
+    }
+  }
+
+  /* Desktop: nav left, name centred, contact right, as on the original */
+  @media (min-width: 60rem) {
+    .bar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+    }
+
+    .name {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .menu {
+      display: contents;
+    }
+
+    nav {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .contact {
+      grid-column: 3;
+      grid-row: 1;
+      justify-content: flex-end;
+    }
+  }
+</style>

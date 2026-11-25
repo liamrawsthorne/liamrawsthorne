@@ -1,0 +1,65 @@
+---
+// Three-column rows with a rule under each, used for work and education history.
+interface Row {
+  a: string;
+  b: string;
+  c: string;
+}
+
+interface Props {
+  rows: Row[];
+  label: string;
+}
+
+const { rows, label } = Astro.props;
+---
+
+<ul class="history" aria-label={label}>
+  {rows.map((row) => (
+    <li class="row">
+      <span class="a">{row.a}</span>
+      <span class="b">{row.b}</span>
+      <span class="c">{row.c}</span>
+    </li>
+  ))}
+</ul>
+
+<style>
+  .history {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-m);
+  }
+
+  .row {
+    display: grid;
+    gap: 0.15rem;
+    padding-bottom: var(--space-m);
+    border-bottom: 1px solid currentColor;
+    font-size: var(--h4);
+    line-height: 1.4;
+  }
+
+  .b,
+  .c {
+    color: var(--muted);
+  }
+
+  :global(.light) .b,
+  :global(.light) .c {
+    color: var(--muted-on-light);
+  }
+
+  @media (min-width: 40rem) {
+    .row {
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .b,
+    .c {
+      color: inherit !important;
+    }
+  }
+</style>

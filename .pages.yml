@@ -1,0 +1,299 @@
+# Pages CMS configuration: https://pagescms.org/docs/
+# Sign in at https://app.pagescms.org with GitHub and open this repository.
+# Every save is a commit to GitHub, and Cloudflare rebuilds the site.
+
+media:
+  - name: images
+    label: Images
+    input: src/assets/portfolio
+    output: /src/assets/portfolio
+    rename: safe
+    extensions: [jpg, jpeg, png, webp, avif, gif, svg]
+  - name: files
+    label: Files
+    input: public/files
+    output: /files
+    rename: safe
+    extensions: [pdf]
+
+content:
+  - name: portfolio
+    label: Portfolio
+    type: collection
+    path: src/content/portfolio
+    format: yaml-frontmatter
+    filename:
+      template: "{primary}.md"
+      field: create
+    view:
+      fields: [title, featured, draft]
+      primary: title
+      sort: [order, title]
+      default:
+        sort: order
+        order: asc
+    fields:
+      - name: title
+        label: Project name
+        type: string
+        required: true
+      - name: summary
+        label: Summary
+        type: text
+        description: One or two sentences. Shown at the top of the project page and in search results.
+      - name: categories
+        label: Type of work
+        type: select
+        options:
+          multiple: true
+          values: [Website Design, UX Design, UI Design, Product Design, User Research]
+      - name: client
+        label: Client
+        type: string
+      - name: year
+        label: Year
+        type: number
+      - name: cover
+        label: Cover image
+        type: image
+        description: A screenshot of the project. Leave empty to show the placeholder. About 1500 × 1000 pixels works best.
+        options:
+          media: images
+      - name: coverAlt
+        label: Cover image description
+        type: string
+        description: Describe what the image shows, for people using screen readers.
+      - name: liveUrl
+        label: Link to the live website
+        type: string
+      - name: featured
+        label: Show in the homepage client list
+        type: boolean
+      - name: order
+        label: Order
+        type: number
+        description: Lower numbers appear first.
+      - name: draft
+        label: Draft
+        type: boolean
+        description: Drafts are saved but not shown on the site.
+      - name: sections
+        label: Case study
+        type: block
+        list: true
+        blockKey: type
+        description: Add sections in the order you want them to appear.
+        blocks:
+          - name: text
+            label: Text
+            fields:
+              - name: heading
+                label: Heading
+                type: string
+                description: Optional, for example "The brief" or "The outcome".
+              - name: content
+                label: Text
+                type: rich-text
+                options:
+                  format: markdown
+                  media: false
+          - name: image
+            label: Image
+            fields:
+              - name: image
+                label: Image
+                type: image
+                required: true
+                options:
+                  media: images
+              - name: alt
+                label: Image description
+                type: string
+                required: true
+              - name: caption
+                label: Caption
+                type: string
+              - name: width
+                label: Width
+                type: select
+                options:
+                  values:
+                    - name: full
+                      label: Full width
+                    - name: text
+                      label: Same width as the text
+          - name: gallery
+            label: Gallery
+            fields:
+              - name: images
+                label: Images
+                type: object
+                list:
+                  min: 1
+                fields:
+                  - name: image
+                    label: Image
+                    type: image
+                    required: true
+                    options:
+                      media: images
+                  - name: alt
+                    label: Image description
+                    type: string
+                    required: true
+              - name: caption
+                label: Caption
+                type: string
+          - name: quote
+            label: Quote
+            fields:
+              - name: quote
+                label: Quote
+                type: text
+                required: true
+                description: Leave out the quotation marks; they're added for you.
+              - name: name
+                label: Who said it
+                type: string
+                required: true
+              - name: title
+                label: Their role
+                type: string
+          - name: results
+            label: Results
+            fields:
+              - name: heading
+                label: Heading
+                type: string
+              - name: items
+                label: Results
+                type: object
+                list:
+                  min: 1
+                fields:
+                  - name: value
+                    label: Number
+                    type: string
+                    required: true
+                    description: For example "40%" or "3x".
+                  - name: label
+                    label: What it measures
+                    type: string
+                    required: true
+          - name: video
+            label: Video
+            fields:
+              - name: url
+                label: Video link
+                type: string
+                required: true
+                description: A YouTube or Vimeo link, or a link to an .mp4 file.
+              - name: title
+                label: Title
+                type: string
+                required: true
+              - name: caption
+                label: Caption
+                type: string
+
+  - name: site
+    label: Site details
+    type: file
+    path: src/data/site.json
+    format: json
+    fields:
+      - name: name
+        label: Your name
+        type: string
+        required: true
+      - name: headline
+        label: Homepage headline
+        type: string
+        description: The big line in the middle of the homepage.
+      - name: tagline
+        label: Tagline
+        type: string
+        description: Shown in the browser tab on the homepage.
+      - name: description
+        label: Search description
+        type: text
+        description: A sentence or two for search results and link previews.
+      - name: role
+        label: Job title
+        type: string
+      - name: company
+        label: Company
+        type: string
+      - name: openForRoles
+        label: Show the green "open for roles" dot
+        type: boolean
+      - name: statusText
+        label: Text beside the dot
+        type: string
+      - name: email
+        label: Email address
+        type: string
+        required: true
+      - name: phone
+        label: Phone number
+        type: string
+      - name: formAccessKey
+        label: Contact form key
+        type: string
+        description: Your free Web3Forms access key (web3forms.com). Leave empty and the form opens the visitor's email app instead.
+      - name: resumeIntro
+        label: Resume introduction
+        type: text
+        description: Shown at the top of the My Resume page.
+      - name: cvFile
+        label: CV (PDF)
+        type: file
+        description: Optional. Adds a "Download my CV" button to the My Resume page.
+        options:
+          media: files
+      - name: experience
+        label: Work history
+        type: object
+        list: true
+        description: Most recent first.
+        fields:
+          - name: role
+            label: Job title
+            type: string
+          - name: org
+            label: Company
+            type: string
+          - name: dates
+            label: Dates
+            type: string
+            description: For example "July 2021 – Present".
+      - name: education
+        label: Education history
+        type: object
+        list: true
+        description: Most recent first.
+        fields:
+          - name: qualification
+            label: Qualification
+            type: string
+          - name: institution
+            label: Where
+            type: string
+          - name: dates
+            label: Dates
+            type: string
+      - name: footerText
+        label: Scrolling footer text
+        type: string
+      - name: links
+        label: Social links
+        type: object
+        list: true
+        description: Shown on the Contact page, for example LinkedIn.
+        fields:
+          - name: label
+            label: Name
+            type: string
+          - name: href
+            label: Link
+            type: string

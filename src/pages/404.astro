@@ -1,0 +1,28 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import { url } from '../lib/url';
+---
+
+<Base title="Page not found">
+  <PageHero title="Page not found" />
+  <section class="light missing">
+    <div class="container">
+      <p>This page doesn’t exist. It may have moved, or the link may have a typo.</p>
+      <p><a class="button" href={url('/')}>Go to the homepage</a></p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .missing {
+    padding-block: var(--section-space);
+  }
+
+  .container {
+    display: grid;
+    gap: 2rem;
+    justify-items: start;
+    font-size: var(--h3);
+  }
+</style>

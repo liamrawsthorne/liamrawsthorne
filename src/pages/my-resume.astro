@@ -1,0 +1,70 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import HistoryTable from '../components/HistoryTable.astro';
+import { site } from '../lib/site';
+import { url } from '../lib/url';
+
+const cvHref = site.cvFile ? (site.cvFile.startsWith('/') ? url(site.cvFile) : site.cvFile) : '';
+---
+
+<Base title="My Resume" page="resume" description={`${site.name}: work history and education.`}>
+  <PageHero title="My Resume" />
+
+  <section class="light resume">
+    <div class="container">
+      <div class="intro">
+        {site.resumeIntro && <p class="lede">{site.resumeIntro}</p>}
+        <div class="actions">
+          {cvHref && (
+            <a class="button" href={cvHref} download>
+              Download my CV (PDF)
+            </a>
+          )}
+          <a class="button" href={url('/contact/')}>Get in touch</a>
+        </div>
+      </div>
+
+      <h2 class="heading">Work History</h2>
+      <HistoryTable label="Work history" rows={site.experience.map((j) => ({ a: j.role, b: j.org, c: j.dates }))} />
+
+      <h2 class="heading education">Education History</h2>
+      <HistoryTable
+        label="Education history"
+        rows={site.education.map((e) => ({ a: e.qualification, b: e.institution, c: e.dates }))}
+      />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .resume {
+    padding-block: var(--section-space);
+  }
+
+  .intro {
+    display: grid;
+    gap: 2rem;
+    margin-bottom: var(--section-space);
+  }
+
+  .lede {
+    max-width: 32ch;
+    font-size: var(--h1);
+    line-height: 1.25;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .heading {
+    margin-bottom: 1rem;
+  }
+
+  .education {
+    margin-top: var(--section-space);
+  }
+</style>

@@ -1,0 +1,151 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import { getPortfolio, coverOf, categoriesOf, slugify } from '../lib/portfolio';
+import { imageWidths } from '../lib/images';
+import { url } from '../lib/url';
+
+const items = await getPortfolio();
+const categories = categoriesOf(items);
+---
+
+<Base title="My Work" page="work" description="Websites and digital projects by Liam Rawsthorne.">
+  <PageHero title="My Work" />
+
+  <section class="light work">
+    <div class="container">
+      {categories.length > 1 && (
+        <div class="filter" role="group" aria-label="Filter by type of work">
+          <button type="button" aria-pressed="true" data-filter="">All Portfolio Types</button>
+          {categories.map((c) => (
+            <button type="button" aria-pressed="false" data-filter={slugify(c)}>{c}</button>
+          ))}
+        </div>
+      )}
+      <p class="visually-hidden" role="status" aria-live="polite" data-count></p>
+
+      <ul class="grid">
+        {items.map((item, i) => {
+          const cover = coverOf(item);
+          return (
+            <li data-categories={item.data.categories.map(slugify).join(' ')}>
+              <a class="card" href={url(`/portfolio/${item.id}/`)}>
+                <Image
+                  src={cover.src}
+                  alt={cover.alt}
+                  widths={imageWidths}
+                  sizes="(min-width: 48rem) 45vw, 100vw"
+                  loading={i < 2 ? 'eager' : 'lazy'}
+                />
+                <span class="title">{item.data.title}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.filter button');
+  const cards = document.querySelectorAll<HTMLElement>('.grid > li');
+  const count = document.querySelector<HTMLElement>('[data-count]');
+  buttons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const filter = button.dataset.filter ?? '';
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+      let shown = 0;
+      cards.forEach((card) => {
+        const match = !filter || (card.dataset.categories ?? '').split(' ').includes(filter);
+        card.hidden = !match;
+        if (match) shown++;
+      });
+      if (count) count.textContent = `Showing ${shown} project${shown === 1 ? '' : 's'}`;
+    });
+  });
+</script>
+
+<style>
+  .work {
+    padding-top: 2.5rem;
+    padding-bottom: var(--section-space);
+  }
+
+  .filter {
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--line-on-light);
+  }
+
+  :global(.js) .filter {
+    display: flex;
+  }
+
+  .filter button {
+    padding: 0.25rem 0;
+    border: 0;
+    background: none;
+    color: var(--muted-on-light);
+    font: inherit;
+    font-size: var(--text-m);
+    cursor: pointer;
+  }
+
+  .filter button:hover,
+  .filter button[aria-pressed='true'] {
+    color: var(--ink);
+  }
+
+  .filter button[aria-pressed='true'] {
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+    text-decoration-thickness: 1px;
+  }
+
+  .grid {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: clamp(2rem, 4vw, 3rem) 1.25rem;
+  }
+
+  @media (min-width: 48rem) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .card {
+    display: grid;
+    gap: 0.9rem;
+    text-decoration: none;
+  }
+
+  .card :global(img) {
+    width: 100%;
+    aspect-ratio: 1000 / 669;
+    object-fit: cover;
+    border-radius: var(--radius);
+    transition: opacity 0.2s ease;
+  }
+
+  .card:hover :global(img) {
+    opacity: 0.9;
+  }
+
+  .title {
+    font-size: var(--h3);
+    line-height: 1.5;
+  }
+
+  .card:hover .title {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+</style>

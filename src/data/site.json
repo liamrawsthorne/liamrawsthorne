@@ -1,0 +1,27 @@
+{
+  "name": "Liam Rawsthorne",
+  "headline": "I’m Liam. I design digital experiences.",
+  "tagline": "Digital experiences that solve real problems",
+  "description": "Liam Rawsthorne is a web designer and developer creating digital experiences that solve real problems.",
+  "role": "Web Designer & Developer",
+  "company": "Soapbox Digital Media",
+  "openForRoles": true,
+  "statusText": "Open For Roles",
+  "email": "hello@liamrawsthorne.com",
+  "phone": "07562 801717",
+  "formAccessKey": "",
+  "resumeIntro": "Web designer and developer at Soapbox Digital Media, with an MSc in User Experience Design from Edinburgh Napier University.",
+  "cvFile": "",
+  "experience": [
+    { "role": "Web Designer and Developer", "org": "Soapbox Digital Media", "dates": "July 2021 – Present" },
+    { "role": "Retail Assistant", "org": "Morrisons", "dates": "June 2014 – July 2021" },
+    { "role": "Marketing Coordinator", "org": "Fern Glass", "dates": "August 2012 – July 2014" }
+  ],
+  "education": [
+    { "qualification": "MSc User Experience Design", "institution": "Edinburgh Napier University", "dates": "September 2020 – July 2021" },
+    { "qualification": "BSc Web Design and Development", "institution": "Edinburgh Napier University", "dates": "September 2014 – July 2017" },
+    { "qualification": "HND Web Design and Development", "institution": "Edinburgh College", "dates": "August 2012 – July 2014" }
+  ],
+  "footerText": "liamrawsthorne",
+  "links": []
+}

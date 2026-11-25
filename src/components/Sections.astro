@@ -1,0 +1,244 @@
+---
+// Renders the flexible sections of a case study, in the order you added them.
+import { Image } from 'astro:assets';
+import { imageWidths } from '../lib/images';
+import type { CollectionEntry } from 'astro:content';
+import { marked } from 'marked';
+
+type Section = CollectionEntry<'portfolio'>['data']['sections'][number];
+
+interface Props {
+  sections: Section[];
+}
+
+const { sections } = Astro.props;
+
+const md = (text: string) => marked.parse(text, { async: false });
+
+// Turns a YouTube, Vimeo or video-file link into something playable.
+function video(url: string) {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, '');
+    if (host === 'youtu.be') {
+      return { kind: 'iframe', src: `https://www.youtube-nocookie.com/embed/${u.pathname.slice(1)}` };
+    }
+    if (host.endsWith('youtube.com')) {
+      const id = u.searchParams.get('v') ?? u.pathname.split('/').filter(Boolean).pop();
+      if (id) return { kind: 'iframe', src: `https://www.youtube-nocookie.com/embed/${id}` };
+    }
+    if (host === 'vimeo.com') {
+      const id = u.pathname.split('/').filter(Boolean)[0];
+      if (id) return { kind: 'iframe', src: `https://player.vimeo.com/video/${id}` };
+    }
+    if (host === 'player.vimeo.com') return { kind: 'iframe', src: url };
+    if (/\.(mp4|webm|mov)$/i.test(u.pathname)) return { kind: 'file', src: url };
+  } catch {}
+  return { kind: 'link', src: url };
+}
+---
+
+<div class="sections">
+  {sections.map((section) => (
+    <>
+      {section.type === 'text' && (
+        <section class="block text">
+          {section.heading && <h2>{section.heading}</h2>}
+          <div class="prose" set:html={md(section.content)} />
+        </section>
+      )}
+
+      {section.type === 'image' && (
+        <figure class:list={['block', 'image', section.width === 'text' && 'narrow']}>
+          <Image
+            src={section.image}
+            alt={section.alt}
+            widths={imageWidths}
+            sizes={section.width === 'text' ? '(min-width: 60rem) 38rem, 100vw' : '(min-width: 90rem) 84rem, 100vw'}
+          />
+          {section.caption && <figcaption>{section.caption}</figcaption>}
+        </figure>
+      )}
+
+      {section.type === 'gallery' && (
+        <figure class="block gallery">
+          <div class="grid" data-count={section.images.length}>
+            {section.images.map((item) => (
+              <Image
+                src={item.image}
+                alt={item.alt}
+                widths={imageWidths}
+                sizes="(min-width: 60rem) 42rem, 100vw"
+              />
+            ))}
+          </div>
+          {section.caption && <figcaption>{section.caption}</figcaption>}
+        </figure>
+      )}
+
+      {section.type === 'quote' && (
+        <figure class="block quote">
+          <blockquote>
+            <p>{section.quote}</p>
+          </blockquote>
+          <figcaption>
+            <span class="name">{section.name}</span>
+            {section.title && <span class="role">{section.title}</span>}
+          </figcaption>
+        </figure>
+      )}
+
+      {section.type === 'results' && (
+        <section class="block results">
+          {section.heading && <h2>{section.heading}</h2>}
+          <dl>
+            {section.items.map((item) => (
+              <div>
+                <dt>{item.label}</dt>
+                <dd>{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+
+      {section.type === 'video' && (() => {
+        const v = video(section.url);
+        return (
+          <figure class="block video">
+            {v.kind === 'iframe' && (
+              <iframe
+                src={v.src}
+                title={section.title}
+                loading="lazy"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowfullscreen
+              />
+            )}
+            {v.kind === 'file' && <video src={v.src} controls preload="metadata" title={section.title} />}
+            {v.kind === 'link' && <a href={v.src}>Watch {section.title}</a>}
+            {section.caption && <figcaption>{section.caption}</figcaption>}
+          </figure>
+        );
+      })()}
+    </>
+  ))}
+</div>
+
+<style>
+  .sections {
+    display: grid;
+    gap: clamp(3rem, 6vw, 5rem);
+  }
+
+  .text,
+  .narrow {
+    max-width: 40rem;
+  }
+
+  .text h2,
+  .results h2 {
+    font-size: var(--h3);
+    margin-bottom: 0.75rem;
+  }
+
+  figure :global(img),
+  .video iframe,
+  .video video {
+    width: 100%;
+    border-radius: var(--radius);
+    background: var(--plum-deep);
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    color: var(--muted-on-light);
+    font-size: 1rem;
+    max-width: 40rem;
+  }
+
+  .gallery .grid {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  @media (min-width: 40rem) {
+    .gallery .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .gallery .grid[data-count='3'] {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .gallery .grid[data-count='1'] {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .gallery .grid :global(img) {
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .quote {
+    max-width: 46rem;
+  }
+
+  blockquote {
+    font-size: var(--h1);
+    line-height: 1.25;
+    text-wrap: balance;
+  }
+
+  blockquote p::before {
+    content: '\201C';
+    color: var(--primary);
+  }
+
+  blockquote p::after {
+    content: '\201D';
+    color: var(--primary);
+  }
+
+  .quote figcaption {
+    display: grid;
+    margin-top: 1.25rem;
+    font-size: var(--text-m);
+  }
+
+  .quote .name {
+    color: var(--ink);
+  }
+
+  .results dl {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line-on-light);
+  }
+
+  .results dl > div {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.25rem;
+  }
+
+  .results dd {
+    font-size: calc(var(--h1) * 1.5);
+    line-height: 1;
+    color: var(--primary);
+  }
+
+  .results dt {
+    color: var(--muted-on-light);
+    font-size: var(--text-m);
+    max-width: 20ch;
+  }
+
+  .video iframe,
+  .video video {
+    display: block;
+    aspect-ratio: 16 / 9;
+    border: 0;
+  }
+</style>

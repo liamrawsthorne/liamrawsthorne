@@ -1,0 +1,31 @@
+---
+// The plum header used on every page except Home.
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<section class="page-hero">
+  <div class="container">
+    <h1>{title}</h1>
+  </div>
+</section>
+
+<style>
+  .page-hero {
+    display: flex;
+    align-items: flex-end;
+    min-height: clamp(20rem, 31.3vw, 28.2rem);
+    padding-top: 7rem;
+    padding-bottom: clamp(2.5rem, 4.6vw, 4.1rem);
+    background: radial-gradient(farthest-side at 100% 0%, var(--plum), var(--plum-deep) 100%), var(--ink);
+    color: var(--white);
+  }
+
+  h1 {
+    font-size: calc(var(--h1) * 1.25);
+    line-height: 1.25;
+  }
+</style>

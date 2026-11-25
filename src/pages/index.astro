@@ -1,0 +1,365 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import HistoryTable from '../components/HistoryTable.astro';
+import ContactForm from '../components/ContactForm.astro';
+import { site } from '../lib/site';
+import { getPortfolio } from '../lib/portfolio';
+import { url } from '../lib/url';
+
+const all = await getPortfolio();
+const clients = all.filter((p) => p.data.featured);
+const domainChars = [...site.emailDomain];
+---
+
+<Base page="home">
+  <section class="hero">
+    <div class="hero-inner container">
+      <h1>{site.headline}</h1>
+      <div class="hero-foot">
+        <p>
+          {site.role}<br />
+          {site.company}
+        </p>
+        {site.openForRoles && (
+          <p class="status">
+            <span class="pulse-dot" aria-hidden="true"></span>
+            {site.statusText}
+          </p>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <section class="history-section" aria-labelledby="work-history">
+    <div class="container">
+      <h2 id="work-history" class="heading">Work History</h2>
+      <HistoryTable label="Work history" rows={site.experience.map((j) => ({ a: j.role, b: j.org, c: j.dates }))} />
+
+      <h2 id="education-history" class="heading education">Education History</h2>
+      <HistoryTable
+        label="Education history"
+        rows={site.education.map((e) => ({ a: e.qualification, b: e.institution, c: e.dates }))}
+      />
+    </div>
+  </section>
+
+  {clients.length > 0 && (
+    <section class="clients" aria-labelledby="clients-title">
+      <div class="container">
+        <h2 id="clients-title" class="visually-hidden">Selected work</h2>
+        <ul class="client-list">
+          {clients.map((item, i) => (
+            <li>
+              <a class="client" href={url(`/portfolio/${item.id}/`)} data-peek={item.data.cover ? i : undefined}>
+                {item.data.categories[0] && <span class="category">{item.data.categories[0]}</span>}
+                <span class="client-name">{item.data.title}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p class="all-work">
+          <a href={url('/my-work/')}>View all work</a>
+        </p>
+      </div>
+
+      <div class="peek" aria-hidden="true">
+        {clients.map((item, i) =>
+          item.data.cover ? (
+            <Image src={item.data.cover} alt="" widths={[480, 800]} sizes="22rem" data-peek-img={i} />
+          ) : null
+        )}
+      </div>
+    </section>
+  )}
+
+  <section class="contact" aria-labelledby="contact-title">
+    <div class="container">
+      <h2 id="contact-title" class="contact-title">Send me a message.</h2>
+      <ContactForm />
+      <p class="sign-off">
+        Say <a href={`mailto:${site.email}`}>{site.emailUser}<span class="domain">{domainChars.map((ch, i) => (
+          <span style={`--i:${i}`}>{ch}</span>
+        ))}</span></a>
+      </p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // Client list: show the project's image beside the pointer on hover.
+  const section = document.querySelector<HTMLElement>('.clients');
+  const peek = section?.querySelector<HTMLElement>('.peek');
+  if (section && peek && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let mx = 0, my = 0, x = 0, y = 0, running = false;
+    const move = () => {
+      x += (mx - x) * (calm ? 1 : 0.18);
+      y += (my - y) * (calm ? 1 : 0.18);
+      peek.style.transform = `translate(${x}px, ${y}px)`;
+      if (running) requestAnimationFrame(move);
+    };
+    section.querySelectorAll<HTMLAnchorElement>('.client').forEach((link) => {
+      link.addEventListener('pointerenter', (e) => {
+        const index = link.dataset.peek;
+        if (index === undefined) return;
+        peek.querySelectorAll('img').forEach((img) => img.classList.toggle('is-active', img.dataset.peekImg === index));
+        if (!running) {
+          x = mx = e.clientX;
+          y = my = e.clientY;
+          running = true;
+          requestAnimationFrame(move);
+        }
+        peek.classList.add('is-visible');
+      });
+      link.addEventListener('pointerleave', () => peek.classList.remove('is-visible'));
+    });
+    section.addEventListener('pointermove', (e) => {
+      mx = e.clientX;
+      my = e.clientY;
+    });
+    section.addEventListener('pointerleave', () => {
+      running = false;
+    });
+  }
+
+  // Contact sign-off: light up the email domain letter by letter on scroll.
+  const signOff = document.querySelector<HTMLElement>('.sign-off');
+  if (signOff && 'IntersectionObserver' in window) {
+    signOff.classList.add('will-light');
+    new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) signOff.classList.add('is-lit');
+        else if (entry.boundingClientRect.top > 0) signOff.classList.remove('is-lit');
+      },
+      // Lights up once the line is fully on screen, even at the very bottom of the page
+      { rootMargin: '0px 0px -5% 0px', threshold: 1 }
+    ).observe(signOff);
+  }
+</script>
+
+<style>
+  /* Hero */
+  .hero {
+    border-bottom: 1px solid var(--white);
+  }
+
+  .hero-inner {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: max(100svh, 36rem);
+    padding-top: 7rem;
+    padding-bottom: 7rem;
+  }
+
+  h1 {
+    max-width: 30ch;
+    font-size: calc(var(--h1) * 1.5);
+    line-height: 1.25;
+    text-align: center;
+  }
+
+  .hero-foot {
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: 1.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    font-size: var(--text-m);
+    line-height: 1.35;
+  }
+
+  .status {
+    display: grid;
+    justify-items: end;
+    gap: 0.5rem;
+    text-align: right;
+  }
+
+  .pulse-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 0 rgb(34 197 94 / 0.7);
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgb(34 197 94 / 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgb(34 197 94 / 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgb(34 197 94 / 0);
+    }
+  }
+
+  /* Work and education history */
+  .history-section {
+    padding-block: var(--section-space);
+    border-bottom: 1px solid var(--white);
+  }
+
+  .heading {
+    margin-bottom: 1rem;
+  }
+
+  .education {
+    margin-top: var(--section-space);
+  }
+
+  /* Client list */
+  .clients {
+    padding-block: var(--section-space);
+    border-bottom: 1px solid var(--white);
+  }
+
+  .client-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .client {
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--h1);
+    line-height: 1.5;
+    text-decoration: none;
+  }
+
+  /* The category slides in on hover, as on the original */
+  .category {
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(-20px);
+    font-size: var(--text-m);
+    color: var(--muted);
+    transition: opacity 0.3s ease, max-width 0.3s ease, transform 0.3s ease, margin 0.3s ease;
+  }
+
+  .client:hover .category,
+  .client:focus-visible .category {
+    max-width: 200px;
+    margin-right: 1rem;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .all-work {
+    margin-top: 2.5rem;
+    font-size: var(--text-m);
+  }
+
+  .all-work a {
+    color: var(--muted);
+    text-underline-offset: 0.25em;
+  }
+
+  .all-work a:hover {
+    color: var(--white);
+  }
+
+  .peek {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 30;
+    width: 22rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  .peek.is-visible {
+    opacity: 1;
+  }
+
+  .peek :global(img) {
+    display: none;
+    width: 100%;
+    aspect-ratio: 1000 / 669;
+    object-fit: cover;
+    border-radius: var(--radius);
+    translate: 4rem -50%;
+  }
+
+  .peek :global(img.is-active) {
+    display: block;
+  }
+
+  /* Contact */
+  .contact {
+    padding-block: var(--section-space);
+  }
+
+  .contact-title {
+    font-size: var(--h1);
+    line-height: 1.5;
+    margin-bottom: clamp(2.5rem, 6vw, 5rem);
+  }
+
+  .sign-off {
+    margin-top: clamp(4rem, 9vw, 8rem);
+    font-size: var(--h1);
+    line-height: 1.5;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+
+  .sign-off a {
+    text-decoration: none;
+  }
+
+  .sign-off a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.15em;
+  }
+
+  .sign-off.will-light .domain span {
+    opacity: 0.15;
+    transition: opacity 0.25s ease calc(var(--i) * 50ms);
+  }
+
+  .sign-off.will-light.is-lit .domain span {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pulse-dot {
+      animation: none;
+    }
+
+    .sign-off.will-light .domain span {
+      opacity: 1;
+      transition: none;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .hero-foot {
+      font-size: 1rem;
+    }
+  }
+
+  /* Keep the role and status clear of the quick contact bar on small phones */
+  @media (max-width: 478px) {
+    .hero-inner {
+      min-height: max(100svh, 34rem);
+      padding-bottom: 10rem;
+    }
+
+    .hero-foot {
+      bottom: 5.75rem;
+    }
+  }
+</style>
